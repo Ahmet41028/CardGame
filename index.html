@@ -1,0 +1,686 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hafıza Kartları Oyunu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #677feb 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .game-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(145deg, #e6e6e6, #ffffff);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .card.flipped {
+            background: linear-gradient(145deg, #4facfe, #00f2fe);
+            color: white;
+        }
+
+        .card.matched {
+            background: linear-gradient(145deg, #56ab2f, #a8e6cf);
+            color: white;
+            cursor: default;
+        }
+
+        .card.matched:hover {
+            transform: none;
+        }
+
+        .card-back {
+            font-size: 2rem;
+            color: #999;
+        }
+
+        .card-front {
+            font-size: 2.5rem;
+            display: none;
+        }
+
+        .card.flipped .card-back,
+        .card.matched .card-back {
+            display: none;
+        }
+
+        .card.flipped .card-front,
+        .card.matched .card-front {
+            display: block;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(145deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(238, 90, 82, 0.3);
+        }
+
+        .victory-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .victory-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .victory-title {
+            font-size: 2.5rem;
+            color: #4facfe;
+            margin-bottom: 20px;
+        }
+
+        .victory-message {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .victory-stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .play-again-btn {
+            padding: 15px 30px;
+            background: linear-gradient(145deg, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-again-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 172, 254, 0.3);
+        }
+
+        .leaderboard {
+            margin-top: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+        }
+
+        .leaderboard-title {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .leaderboard-table th {
+            background: linear-gradient(145deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 15px 10px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .leaderboard-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .leaderboard-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .leaderboard-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .rank-cell {
+            text-align: center;
+            font-weight: bold;
+            width: 60px;
+        }
+
+        .rank-1 { color: #ffd700; }
+        .rank-2 { color: #c0c0c0; }
+        .rank-3 { color: #cd7f32; }
+
+        .name-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .clear-scores-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .clear-scores-btn:hover {
+            background: #ee5a52;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .game-board {
+                gap: 10px;
+            }
+            
+            .card-front {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🧠 Hafıza Kartları Oyunu</h1>
+        
+        <div class="game-stats">
+            <div class="stat">
+                <div class="stat-label">Hamle</div>
+                <div class="stat-value" id="moves">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Eşleşen</div>
+                <div class="stat-value" id="matches">0/8</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Süre</div>
+                <div class="stat-value" id="time">00:00</div>
+            </div>
+        </div>
+
+        <div class="game-board" id="gameBoard">
+            <!-- Kartlar JavaScript ile oluşturulacak -->
+        </div>
+
+        <button class="reset-btn" onclick="resetGame()">🔄 Yeni Oyun</button>
+
+        <!-- Sıralama Tablosu -->
+        <div class="leaderboard" id="leaderboard">
+            <div class="leaderboard-title">
+                🏆 En İyi Skorlar
+            </div>
+            <table class="leaderboard-table" id="leaderboardTable">
+                <thead>
+                    <tr>
+                        <th>Sıra</th>
+                        <th>İsim</th>
+                        <th>Süre</th>
+                        <th>Hamle</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999; padding: 30px;">
+                            Henüz oyun oynayan yok. İlk skor sahibi sen ol! 🎮
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="clear-scores-btn" onclick="clearScores()">🗑️ Skorları Temizle</button>
+        </div>
+    </div>
+
+    <!-- Zafer Modalı -->
+    <div class="victory-modal" id="victoryModal">
+        <div class="victory-content">
+            <div class="victory-title">🎉 Tebrikler!</div>
+            <div class="victory-message">Oyunu başarıyla tamamladınız!</div>
+            <div class="victory-stats">
+                <div><strong>Toplam Hamle:</strong> <span id="finalMoves">0</span></div>
+                <div><strong>Süre:</strong> <span id="finalTime">00:00</span></div>
+            </div>
+            <input type="text" class="name-input" id="playerName" placeholder="Adınızı girin..." maxlength="20">
+            <button class="play-again-btn" onclick="saveScore()">Skoru Kaydet ve Tekrar Oyna</button>
+        </div>
+    </div>
+
+    <script>
+        // Oyun değişkenleri
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let moves = 0;
+        let gameStarted = false;
+        let startTime = null;
+        let timerInterval = null;
+
+        // Kart simgeleri
+        const symbols = ['❤️', '⭐', '🔷', '🌙', '🍀', '🎵', '🌸', '⚡'];
+
+        // Skor sistemi
+        let scores = JSON.parse(localStorage.getItem('memoryGameScores')) || [];
+
+        // Oyunu başlat
+        function initGame() {
+            // Kartları oluştur (her simgelden 2 tane)
+            cards = [...symbols, ...symbols];
+            
+            // Kartları karıştır
+            shuffleArray(cards);
+            
+            // Oyun tahtasını oluştur
+            createGameBoard();
+            
+            // İstatistikleri sıfırla
+            resetStats();
+        }
+
+        // Diziyi karıştır
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        // Oyun tahtasını oluştur
+        function createGameBoard() {
+            const gameBoard = document.getElementById('gameBoard');
+            gameBoard.innerHTML = '';
+
+            cards.forEach((symbol, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.dataset.index = index;
+                card.dataset.symbol = symbol;
+                
+                card.innerHTML = `
+                    <div class="card-back">🎴</div>
+                    <div class="card-front">${symbol}</div>
+                `;
+                
+                card.addEventListener('click', () => flipCard(card, index));
+                gameBoard.appendChild(card);
+            });
+        }
+
+        // Kartı çevir
+        function flipCard(cardElement, index) {
+            // Oyun başlamadıysa zamanlayıcıyı başlat
+            if (!gameStarted) {
+                startGame();
+            }
+
+            // Kart zaten açıksa veya eşleşmişse işlem yapma
+            if (cardElement.classList.contains('flipped') || 
+                cardElement.classList.contains('matched') || 
+                flippedCards.length >= 2) {
+                return;
+            }
+
+            // Kartı çevir
+            cardElement.classList.add('flipped');
+            flippedCards.push({element: cardElement, index: index, symbol: cards[index]});
+
+            // İki kart açıldıysa kontrol et
+            if (flippedCards.length === 2) {
+                moves++;
+                updateMoves();
+                
+                setTimeout(() => {
+                    checkMatch();
+                }, 1000);
+            }
+        }
+
+        // Eşleşme kontrolü
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+
+            if (card1.symbol === card2.symbol) {
+                // Eşleşme var
+                card1.element.classList.remove('flipped');
+                card1.element.classList.add('matched');
+                card2.element.classList.remove('flipped');
+                card2.element.classList.add('matched');
+                
+                matchedPairs++;
+                updateMatches();
+                
+                // Oyun bitti mi kontrol et
+                if (matchedPairs === 8) {
+                    setTimeout(() => {
+                        endGame();
+                    }, 500);
+                }
+            } else {
+                // Eşleşme yok
+                card1.element.classList.remove('flipped');
+                card2.element.classList.remove('flipped');
+            }
+
+            flippedCards = [];
+        }
+
+        // Oyunu başlat
+        function startGame() {
+            gameStarted = true;
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Oyunu bitir
+        function endGame() {
+            clearInterval(timerInterval);
+            
+            // Final istatistiklerini göster
+            document.getElementById('finalMoves').textContent = moves;
+            document.getElementById('finalTime').textContent = document.getElementById('time').textContent;
+            
+            // Zafer modalını göster
+            document.getElementById('victoryModal').style.display = 'flex';
+        }
+
+        // İstatistikleri güncelle
+        function updateMoves() {
+            document.getElementById('moves').textContent = moves;
+        }
+
+        function updateMatches() {
+            document.getElementById('matches').textContent = `${matchedPairs}/8`;
+        }
+
+        function updateTimer() {
+            if (!startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            
+            document.getElementById('time').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // İstatistikleri sıfırla
+        function resetStats() {
+            moves = 0;
+            matchedPairs = 0;
+            gameStarted = false;
+            startTime = null;
+            flippedCards = [];
+            
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            
+            updateMoves();
+            updateMatches();
+            document.getElementById('time').textContent = '00:00';
+        }
+
+        // Oyunu sıfırla
+        function resetGame() {
+            // Modalı kapat
+            document.getElementById('victoryModal').style.display = 'none';
+            
+            // İsim girişini temizle
+            document.getElementById('playerName').value = '';
+            
+            // Oyunu yeniden başlat
+            initGame();
+        }
+
+        // Skoru kaydet
+        function saveScore() {
+            const playerName = document.getElementById('playerName').value.trim();
+            
+            if (!playerName) {
+                alert('Lütfen adınızı girin!');
+                return;
+            }
+
+            const finalTime = document.getElementById('finalTime').textContent;
+            const timeInSeconds = timeToSeconds(finalTime);
+            
+            const newScore = {
+                name: playerName,
+                time: finalTime,
+                timeInSeconds: timeInSeconds,
+                moves: moves,
+                date: new Date().toLocaleDateString('tr-TR')
+            };
+
+            scores.push(newScore);
+            sortScores();
+            saveScoresToStorage();
+            updateLeaderboard();
+            resetGame();
+        }
+
+        // Zamanı saniyeye çevir
+        function timeToSeconds(timeString) {
+            const [minutes, seconds] = timeString.split(':').map(Number);
+            return minutes * 60 + seconds;
+        }
+
+        // Skorları sırala
+        function sortScores() {
+            scores.sort((a, b) => {
+                // Önce süreye göre sırala
+                if (a.timeInSeconds !== b.timeInSeconds) {
+                    return a.timeInSeconds - b.timeInSeconds;
+                }
+                // Süre eşitse hamle sayısına göre sırala
+                if (a.moves !== b.moves) {
+                    return a.moves - b.moves;
+                }
+                // Her ikisi de eşitse aynı sırada (0 döndür)
+                return 0;
+            });
+
+            // En fazla 10 skor tut
+            scores = scores.slice(0, 10);
+        }
+
+        // Skorları localStorage'a kaydet
+        function saveScoresToStorage() {
+            localStorage.setItem('memoryGameScores', JSON.stringify(scores));
+        }
+
+        // Sıralama tablosunu güncelle
+        function updateLeaderboard() {
+            const tbody = document.getElementById('leaderboardBody');
+            
+            if (scores.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #999; padding: 30px;">
+                            Henüz oyun oynayan yok. İlk skor sahibi sen ol! 🎮
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            
+            scores.forEach((score, index) => {
+                const row = document.createElement('tr');
+                const rank = index + 1;
+                let rankClass = '';
+                let rankIcon = '';
+                
+                if (rank === 1) {
+                    rankClass = 'rank-1';
+                    rankIcon = '🥇';
+                } else if (rank === 2) {
+                    rankClass = 'rank-2';
+                    rankIcon = '🥈';
+                } else if (rank === 3) {
+                    rankClass = 'rank-3';
+                    rankIcon = '🥉';
+                } else {
+                    rankIcon = rank;
+                }
+
+                row.innerHTML = `
+                    <td class="rank-cell ${rankClass}">${rankIcon}</td>
+                    <td><strong>${score.name}</strong></td>
+                    <td>${score.time}</td>
+                    <td>${score.moves}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Skorları temizle
+        function clearScores() {
+            if (confirm('Tüm skorları silmek istediğinizden emin misiniz?')) {
+                scores = [];
+                saveScoresToStorage();
+                updateLeaderboard();
+            }
+        }
+
+        // Sayfa yüklendiğinde oyunu başlat
+        window.addEventListener('load', () => {
+            initGame();
+            updateLeaderboard();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96f1c9a2d6e7358f',t:'MTc1NTE4ODUxMS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
